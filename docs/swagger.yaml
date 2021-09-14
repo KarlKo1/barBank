@@ -1,0 +1,70 @@
+openapi: 3.0.2
+info:
+  title: yabarbank
+  version: 1.0.0
+paths:
+  /users:
+    summary: Path used to manage the list of users.
+    description: >-
+      The REST endpoint/path used to list and create zero or more `user` entities.  This path contains a
+      `GET` and `POST` operation to perform the list and create tasks, respectively.
+    post:
+      requestBody:
+        description: A new `user` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user'
+        required: true
+      responses:
+        '201':
+          description: Successful response.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                'User validation failed: {param}: Path `{param}` is required.':
+                  value:
+                    error: 'User validation failed: {param}: Path `{param}` is required.'
+          description: Input validation failed. Some parameter is missing or in incorrect format.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Username already exists:
+                  value:
+                    error: Username already exists
+          description: Username already exists
+      operationId: createuser
+      summary: Create a user
+      description: Creates a new instance of a `user`.
+components:
+  schemas:
+    user:
+      title: Root Type for user
+      description: ''
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+      example:
+        username: henno
+        password: secret
+        name: Henno Täht
+    error:
+      title: Root Type for error
+      description: ''
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: Error message.
