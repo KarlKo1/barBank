@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express()
-const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const swaggerUi = require('swagger-ui-express')
 const yamljs = require('yamljs')
@@ -15,8 +14,9 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use(express.json())
 
 
-// /users endpoints
+// Endpoints
 app.use('/users', require('./routes/users'))
+app.use('/sessions', require('./routes/sessions'))
 
 mongoose.connect(process.env.MONGODB_URI, {}, function () {
     console.log('Connected to mongoDB')

@@ -16,6 +16,8 @@ paths:
             schema:
               $ref: '#/components/schemas/user'
         required: true
+      tags:
+        - users
       responses:
         '201':
           description: Successful response.
@@ -42,7 +44,80 @@ paths:
       operationId: createuser
       summary: Create a user
       description: Creates a new instance of a `user`.
+  /sessions:
+    summary: Path used to manage the list of sessions.
+    description: >-
+      The REST endpoint/path used to list and create zero or more `session` entities.  This path
+      contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
+    post:
+      requestBody:
+        description: A new `session` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/session'
+            examples:
+              POST /sessions request body:
+                value:
+                  username: kasutaja
+                  password: suvalpar123
+        required: true
+      tags:
+        - sessions
+      responses:
+        '201':
+          content:
+            application/json:
+              examples:
+                POST /sessions 201 response:
+                  value:
+                    token: 23m52jmnb52b524t4
+          description: Successful response.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid credentials:
+                  value:
+                    error: Invalid credentials
+          description: Invalid credentials
+      operationId: createsession
+      summary: Create a session
+      description: Creates a new instance of a `session`.
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - sessions
+      responses:
+        '204':
+          description: Successful logout
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid Authorization header:
+                  value:
+                    error: Invalid authorization header
+                Invalid Authorization header format:
+                  value:
+                    error: Invalid authorization header format
+                Missing Authorization header:
+                  value:
+                    error: Missing Authorization header
+                Invalid token:
+                  value:
+                    error: Invalid token
+          description: Invalid Authorization header
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     user:
       title: Root Type for user
@@ -56,9 +131,9 @@ components:
         name:
           type: string
       example:
-        username: henno
+        username: karlko
         password: secret
-        name: Henno Täht
+        name: Karl Kongo
     error:
       title: Root Type for error
       description: ''
@@ -68,3 +143,13 @@ components:
           type: string
       example:
         error: Error message.
+    session:
+      description: ''
+      type: object
+tags:
+  -
+    name: sessions
+    description: ''
+  -
+    name: users
+    description: ''
