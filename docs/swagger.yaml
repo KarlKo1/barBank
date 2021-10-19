@@ -59,8 +59,8 @@ paths:
             examples:
               POST /sessions request body:
                 value:
-                  username: kasutaja
-                  password: suvalpar123
+                  username: parts
+                  password: merkuur123
         required: true
       tags:
         - sessions
@@ -71,7 +71,7 @@ paths:
               examples:
                 POST /sessions 201 response:
                   value:
-                    token: 23m52jmnb52b524t4
+                    token: 615c91c70dc7870c73f1879a
           description: Successful response.
         '401':
           content:
@@ -159,6 +159,79 @@ paths:
           bearerAuth: []
       summary: Get user's details
       description: Returns instance of `user`
+  /transactions:
+    summary: Path used to manage the list of transactions.
+    description: >-
+      The REST endpoint/path used to list and create zero or more `transaction` entities.  This path
+      contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
+    post:
+      requestBody:
+        description: A new `transaction` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/transaction'
+        required: true
+      tags:
+        - transactions
+      responses:
+        '201':
+          description: Successful response.
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid amount:
+                  value:
+                    error: Invalid amount
+                Missing parameter:
+                  value:
+                    error: 'Transaction validation failed: .* : Path ''.*'' is required.'
+                Parameter shorter than the minimum allowed length:
+                  value:
+                    error: Path '.*' ('.*') is shorter than the minimum allowed length
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Missing authorization header:
+                  value:
+                    error: Missing authorization header
+                Invalid authorization header:
+                  value:
+                    error: Invalid authorization header
+          description: Unauthorized
+        '402':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Insufficient funds:
+                  value:
+                    error: Insufficient funds
+          description: Insufficient funds
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                accountFrom not found:
+                  value:
+                    error: accountFrom not found
+          description: Not found
+      security:
+        -
+          bearerAuth: []
+      operationId: createtransaction
+      summary: Create a transaction
+      description: Creates a new instance of a `transaction`.
 components:
   schemas:
     user:
@@ -173,9 +246,9 @@ components:
         name:
           type: string
       example:
-        username: karlko
-        password: secret
-        name: Karl Kongo
+        username: parts
+        password: merkuur123
+        name: Juhan Parts
     error:
       title: Root Type for error
       description: ''
@@ -188,6 +261,25 @@ components:
     session:
       description: ''
       type: object
+    transaction:
+      title: Root Type for transaction
+      description: ''
+      type: object
+      properties:
+        accountFrom:
+          type: string
+        accountTo:
+          type: string
+        amount:
+          format: int32
+          type: integer
+        explanation:
+          type: string
+      example:
+        accountFrom: af43f24c022ffb8bc2866426de593dea64a
+        accountTo: af4f4d24564c7397aaedc60ed975ee84b53
+        amount: 100
+        explanation: Don’t go spend it all at once
   securitySchemes:
     bearerAuth:
       scheme: bearer
@@ -198,4 +290,7 @@ tags:
     description: ''
   -
     name: users
+    description: ''
+  -
+    name: transactions
     description: ''
