@@ -5,7 +5,6 @@ const swaggerUi = require('swagger-ui-express')
 const yamljs = require('yamljs')
 const {processTransactions} = require("./middlewares");
 const swaggerDocument = yamljs.load('docs/swagger.yaml')
-
 require('dotenv').config()
 
 // Serve API documentation on /docs
@@ -15,9 +14,6 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use(express.json())
 
 // Endpoints
-app.use('/transactions/b2b', function(req, res){
-    res.send({receiverName: "Jaan Tamm"})
-})
 app.use('/users', require('./routes/users'))
 app.use('/sessions', require('./routes/sessions'))
 app.use('/transactions', require('./routes/transactions'))

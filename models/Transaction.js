@@ -2,11 +2,12 @@ const mongoose = require('mongoose')
 
 module.exports = mongoose.model('Transaction', mongoose.Schema({
 
+    userId: {type: mongoose.Schema.Types.ObjectId, ref: "User"},
     accountFrom: {type: String, required: true, minlength: 4},
     accountTo: {type: String, required: true, minlength: 4},
     amount: {type: Number, required: true, min: 0.01},
     currency: {type: String, required: true, minlength: 3},
-    createdAt: {type: Date, required: true, default: Date.now},
+    createdAt: {type: Date, required:  true, default: Date.now},
     explanation: {type: String, required: true, minlength: 1},
     senderName: {type: String},
     receiverName: {type: String},
