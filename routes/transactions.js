@@ -201,4 +201,12 @@ async function getRates(from,to) {
     }
 }
 
+router.get('/', verifyToken, async (req, res) => {
+    //Get user's transactions
+    const transactions = await Transaction.find({userId: req.userId})
+
+    // Return them
+    res.status(200).json(transactions)
+})
+
 module.exports = router
