@@ -122,6 +122,7 @@ router.post('/b2b', async function (req, res) {
         const accountTo = await Account.findOne({number: payload.accountTo})
 
 
+
         if (!accountTo) {
             return res.status(404).send({error: 'Account not found'})
         }

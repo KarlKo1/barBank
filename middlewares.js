@@ -6,6 +6,7 @@ const Transaction = require("./models/Transaction")
 const fetch = require("node-fetch")
 const jose = require('node-jose')
 const fs = require('fs')
+const nock = require('nock')
 //const {sendRequest} = require("./middlewares");
 
 exports.verifyToken = async (req, res, next) => {
@@ -46,9 +47,35 @@ exports.refreshListOfBanksFromCentralBank = async function refreshListOfBanksFro
     console.log('Refreshing list of banks')
 
     try {
+        // Mock central bank responses in TEST_MODE
+        if (process.env.TEST_MODE === 'true') {
+
+            console.log('TEST_MODE=true');
+            nock(process.env.CENTRAL_BANK_URL)
+                .persist()
+                .get('/banks')
+                .reply(200,
+                    [
+                        {
+                            "name": "fooBank",
+                            "transactionUrl": "http://foobank.com/transactions/b2b",
+                            "bankPrefix": "843",
+                            "owners": "John Smith",
+                            "jwksUrl": "http://foobank.diarainfra.com/jwks.json"
+                        },
+                        {
+                            "name": "barBank",
+                            "transactionUrl": "https://barbank.com/api/external/receive",
+                            "bankPrefix": "bar",
+                            "owners": "Jane Smith",
+                            "jwksUrl": "https://barbank.com/api/external/keys"
+                        }
+                    ]
+                )
+        }
 
         //Attempt to get a list of banks in JSON format from central bank
-        let banks = await fetch(process.env.CENTRAL_BANK_URL, {
+        let banks = await fetch(`${process.env.CENTRAL_BANK_URL}/banks`, {
             headers: {'Api-Key': process.env.CENTRAL_BANK_APIKEY}
         }).then(responseText => responseText.json())
 
@@ -140,8 +167,9 @@ exports.sendRequest = async (method, url, data) => {
 
         return JSON.parse(responseText);
     } catch (e) {
-        throw new Error('sendRequest(' + url + '): ' + e.message + (typeof responseText === 'undefined' ? '' : '|' + responseText))   }
+        throw new Error('sendRequest(' + url + '): ' + e.message + (typeof responseText === 'undefined' ? '' : '|' + responseText))
     }
+}
 
 async function refund(transaction) {
     try {
@@ -156,7 +184,6 @@ async function refund(transaction) {
 }
 
 exports.processTransactions = async function () {
-
     //Get pending transactions
     const pendingTransactions = await Transaction.find({status: 'Pending'})
 
@@ -177,16 +204,16 @@ exports.processTransactions = async function () {
         let destinationBank = await Bank.findOne({bankPrefix})
 
         //If we don't have the bank in local database
-        if(!destinationBank){
+        if (!destinationBank) {
             let result = exports.refreshListOfBanksFromCentralBank()
-            if (typeof result.error !== 'undefined'){
-                return await setStatus(transaction, 'Pending', 'Central bank refresh failed: ' + result.error )
+            if (typeof result.error !== 'undefined') {
+                return await setStatus(transaction, 'Pending', 'Central bank refresh failed: ' + result.error)
             }
 
-            destinationBank = Bank.setTraceFunction(traceFunction).findOne({bankPrefix});
+            // destinationBank = Bank.setTraceFunction(traceFunction).findOne({bankPrefix});
 
-            if(!destinationBank) {
-                console.log('Failed', 'Bank' + bankPrefix + ' does not exist')
+            if (!destinationBank) {
+                console.log('Failed', 'Bank ' + bankPrefix + ' does not exist')
                 await refund(transaction);
                 return await setStatus(transaction, 'Failed', 'Bank ' + bankPrefix + ' does no exist. ')
             }
@@ -194,6 +221,19 @@ exports.processTransactions = async function () {
         }
 
         try {
+
+            if (process.env.TEST_MODE === 'true') {
+
+                const nockUrl = new URL(destinationBank.transactionUrl)
+
+                console.log('Nocking ' + JSON.stringify(nockUrl));
+
+                nock(`${nockUrl.protocol}//${nockUrl.host}`)
+                    .persist()
+                    .post(nockUrl.pathname)
+                    .reply(200, {receiverName: 'foobar'})
+            }
+
             const response = await sendRequestToBank(destinationBank, await createSignedTransaction({
                 accountFrom: transaction.accountFrom,
                 accountTo: transaction.accountTo,
@@ -228,5 +268,5 @@ exports.processTransactions = async function () {
 
     //Recursively call itself again
     //console.log(`Completed processTransactions() in ${endTimer(start)} , setting next run after 1000ms`)
-    setTimeout(exports.processTransactions,1000)
+    setTimeout(exports.processTransactions, 1000)
 }
